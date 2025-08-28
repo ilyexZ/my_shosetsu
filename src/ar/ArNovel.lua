@@ -4,7 +4,7 @@ return Require("Madara")("https://arnovel.me", {
 	id = 4500,
 	name = "ArNovel",
 	imageURL = "https://github.com/shosetsuorg/extensions/raw/dev/icons/ArNovel.png",
-	novelListingURLPath = "series",
+	novelListingURLPath = "novels",
 	shrinkURLNovel = "novel",
 	latestNovelSel = "div.col-12.col-md-6",
 	searchHasOper = true,
