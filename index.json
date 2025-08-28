@@ -57,7 +57,9 @@
       "id": 19691969,
       "lang": "ar",
       "ver": "1.0.3",
-      "libVer": "1.0.0"
+      "libVer": "1.0.0",
+      "imageURL": "https://github.com/shosetsuorg/extensions/raw/dev/icons/ArNovel.png",
+       "md5": ""
     },
     {
       "name": "Team X Novel",
