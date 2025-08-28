@@ -1,6 +1,6 @@
 -- {"id":19691969,"ver":"1.0.3","libVer":"1.0.0","author":"MechTechnology","dep":["Madara>=2.3.2"]}
 
-return Require("Madara")("https://https://kolnovel.site.site", {
+return Require("Madara")("https://kolnovel.site", {
 	id = 19691969,
 	name = "kolnovel",
 	novelListingURLPath = "novels",
