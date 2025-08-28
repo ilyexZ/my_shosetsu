@@ -1,0 +1,84 @@
+{
+  "libraries": [
+    {
+      "name": "247truyen",
+      "ver": "1.1.2"
+    },
+    {
+      "name": "CommonCSS",
+      "ver": "1.0.1"
+    },
+    {
+      "name": "dkjson",
+      "ver": "1.0.1"
+    },
+    {
+      "name": "NovelFull",
+      "ver": "2.0.6"
+    },
+    {
+      "name": "url",
+      "ver": "1.0.0"
+    },
+    {
+      "name": "WWVolare",
+      "ver": "1.2.1"
+    },
+    {
+      "name": "Madara",
+      "ver": "2.4.0"
+    }
+  ],
+  "scripts": [
+    {
+      "name": "MTLNovel",
+      "fileName": "MTLNovel",
+      "imageURL": "https://github.com/shosetsuorg/extensions/raw/dev/icons/MTLNovel.png",
+      "id": 573,
+      "lang": "en",
+      "ver": "2.0.1",
+      "libVer": "1.0.0",
+      "md5": "c4a2b8bfb6e6103ad0c8615fb6602bbe"
+    },
+    
+    {
+      "name": "ArNovel",
+      "fileName": "ArNovel",
+      "imageURL": "https://github.com/shosetsuorg/extensions/raw/dev/icons/ArNovel.png",
+      "id": 4500,
+      "lang": "ar",
+      "ver": "1.0.3",
+      "libVer": "1.0.0",
+      "md5": ""
+    },
+     {
+      "name": "Kolnovel",
+      "fileName": "Kolnovel",
+      "id": 19691969,
+      "lang": "ar",
+      "ver": "1.0.3",
+      "libVer": "1.0.0"
+    },
+    {
+      "name": "Team X Novel",
+      "fileName": "TeamXNovel",
+      "imageURL": "https://github.com/shosetsuorg/extensions/raw/dev/icons/TeamXNovel.png",
+      "id": 4501,
+      "lang": "ar",
+      "ver": "1.0.1",
+      "libVer": "1.0.0",
+      "md5": ""
+    },
+    {
+      "name": "Rewayat Club - نادي الروايات",
+      "fileName": "RewayatClub",
+      "imageURL": "https://github.com/shosetsuorg/extensions/raw/dev/icons/RewayatClub.png",
+      "id": 3302,
+      "lang": "ar",
+      "ver": "1.0.1",
+      "libVer": "1.0.0",
+      "md5": ""
+    }
+   
+  ]
+}
