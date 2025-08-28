@@ -3,7 +3,7 @@
 return Require("Madara")("https://kolnovel.site", {
 	id = 19691969,
 	name = "kolnovel",
-	novelListingURLPath = "novels",
+	novelListingURLPath = "series",
 	shrinkURLNovel = "novel",
 	latestNovelSel = "div.col-12.col-md-6",
 	searchHasOper = true,
