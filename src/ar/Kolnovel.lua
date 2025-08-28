@@ -20,9 +20,8 @@ return {
             local d = GETDocument(baseURL .. "/series/?page=" .. data[PAGE])
 
             return map(d:select(" div.listupd  article"), function(v)
-
                 return Novel {
-                    title = v:selectFirst("span.ntitle"):text(),
+                    title = v:selectFirst("h2, h3"):text(),
                     imageURL = v:selectFirst("img"):attr("src"),
                     link = shrinkURL(v:selectFirst("a"):attr("href"))
                 }
@@ -38,15 +37,22 @@ return {
                     link = shrinkURL(v:select("div.luf  a.series"):attr("href"))
                 }
             end)
-        end)},
+        end) },
     parseNovel = function(novelURL, loadChapters)
-        local document = GETDocument(expandURL(novelURL)):selectFirst("article")
+        --local document = GETDocument(expandURL(novelURL)):selectFirst("article")
+        local document = GETDocument(expandURL(novelURL))
+
         local novelInfo = NovelInfo()
-        novelInfo:setTitle(document:select("h1"):text())
+        -- novelInfo:setTitle(document:select("h1"):text())
+        -- novelInfo:setImageURL(document:select("div.bigcover img"):attr("src"))
+        novelInfo:setTitle(document:select("h1.entry-title, h1"):text())
         novelInfo:setImageURL(document:select("div.bigcover img"):attr("src"))
-        novelInfo:setDescription(table.concat(map(document:select("div.entry-content"), function(v)
-            return v:text()
-        end), "\n"))
+
+        -- novelInfo:setDescription(table.concat(map(document:select("div.entry-content"),
+        -- function(v)
+        --     return v:text()
+        -- end), "\n"))
+        novelInfo:setDescription(document:select("div.entry-content"):text())
 
         local sta = document:selectFirst("div.info-content span:nth-child(1)"):text()
         local t = sta:gsub("الحالة: ", "")
@@ -75,7 +81,6 @@ return {
             novelInfo:setChapters(chapterList)
         end
         return novelInfo
-
     end,
     getPassage = function(chapterURL)
         local d = GETDocument(expandURL(chapterURL))
