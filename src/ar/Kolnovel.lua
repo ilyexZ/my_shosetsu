@@ -1,44 +1,100 @@
--- {"id":19691969,"ver":"1.0.3","libVer":"1.0.0","author":"MechTechnology","dep":["Madara>=2.3.2"]}
+-- {"id":19691969,"ver":"1.0.1","libVer":"1.0.0","author":"Ali Mohamed"}
+local baseURL = "https://kolnovel.site"
 
-return Require("Madara")("https://kolnovel.site", {
-	id = 19691969,
-	name = "kolnovel",
-	novelListingURLPath = "series",
-	shrinkURLNovel = "novel",
-	latestNovelSel = "div.col-12.col-md-6",
-	searchHasOper = true,
+local function shrinkURL(url)
+    return url:gsub(baseURL, "")
+end
 
-	genres = {
-		["%d8%a3%d9%83%d8%b4%d9%86"] = "أكشن",
-		["%d8%a5%d8%aa%d8%b4%d9%8a"] = "إتشي",
-		["%d8%a8%d8%a7%d9%84%d8%ba"] = "بالغ",
-		["%d8%aa%d8%a7%d8%b1%d9%8a%d8%ae%d9%8a"] = "تاريخي",
-		["%d8%aa%d8%b1%d8%a7%d8%ac%d8%af%d9%8a"] = "تراجدي",
-		["%d8%ac%d9%88%d8%b3%d9%8a"] = "جوسي",
-		["%d8%ad%d8%b1%d9%8a%d9%85"] = "حريم",
-		["%d8%ad%d9%8a%d8%a7%d8%a9-%d9%85%d8%af%d8%b1%d8%b3%d9%8a%d8%a9"] = "حياة مدرسية",
-		["%d8%ae%d8%a7%d8%b1%d9%82-%d9%84%d8%b7%d8%a8%d9%8a%d8%b9%d9%8a%d8%a9"] = "خارق لطبيعية",
-		["%d8%ae%d9%8a%d8%a7%d9%84"] = "خيال",
-		["%d8%ae%d9%8a%d8%a7%d9%84-%d8%b9%d9%84%d9%85%d9%8a"] = "خيال علمي",
-		["%d8%af%d8%b1%d8%a7%d9%85%d8%a7"] = "دراما",
-		["%d8%b1%d8%a7%d8%b4%d8%af"] = "راشد",
-		["%d8%b1%d8%b9%d8%a8"] = "رعب",
-		["%d8%b1%d9%88%d9%85%d9%86%d8%b3%d9%8a"] = "رومنسي",
-		["%d8%b1%d9%8a%d8%a7%d8%b6%d9%8a"] = "رياضي",
-		["%d8%b3%d9%8a%d9%86%d9%8a%d9%86"] = "سينين",
-		["%d8%b4%d8%b1%d9%8a%d8%ad%d8%a9-%d9%85%d9%86-%d8%a7%d9%84%d8%ad%d9%8a%d8%a7%d8%a9"] = "شريحة من الحياة",
-		["%d8%b4%d9%88%d8%ac%d9%88"] = "شوجو",
-		["%d8%b4%d9%88%d9%86%d9%8a%d9%86"] = "شونين",
-		["%d8%ba%d9%85%d9%88%d8%b6"] = "غموض",
-		["%d9%81%d9%86%d9%88%d9%86-%d9%82%d8%aa%d8%a7%d9%84"] = "فنون قتال",
-		["%d9%83%d9%88%d9%85%d9%8a%d8%af%d9%8a%d8%a7"] = "كوميديا",
-		["%d9%85%d8%ba%d8%a7%d9%85%d8%b1%d8%a7%d8%aa"] = "مغامرات",
-		["%d9%85%d9%86%d8%aa%d9%87%d9%8a%d8%a9"] = "منتهية",
-		["%d9%85%d9%8a%d9%83%d8%a7"] = "ميكا",
-		["%d9%86%d9%81%d8%b3%d9%8a"] = "نفسي",
-		["complete"] = "منتهية",
-		["on-going"] = "مستمرة",
-		["canceled"] = "تم إلغاءها",
-		["on-hold"] = "متوقفة",
-	}
-})
+local function expandURL(url)
+    return baseURL .. url
+end
+
+return {
+    id = 19691969,
+    name = "Kolnovel - ملوك الروايات",
+    baseURL = baseURL,
+    imageURL = "https://github.com/shosetsuorg/extensions/raw/dev/icons/Kolnovel.png",
+    hasSearch = true,
+    listings = {
+        Listing("Novel List", true, function(data)
+            local d = GETDocument(baseURL .. "/series/?page=" .. data[PAGE])
+
+            return map(d:select(" div.listupd  article"), function(v)
+
+                return Novel {
+                    title = v:selectFirst("span.ntitle"):text(),
+                    imageURL = v:selectFirst("img"):attr("src"),
+                    link = shrinkURL(v:selectFirst("a"):attr("href"))
+                }
+            end)
+        end),
+        Listing("Latest", true, function(data)
+            local d = GETDocument(baseURL .. "/page/" .. data[PAGE] .. "/")
+
+            return map(d:select("div.latesthome~div.listupd div.uta"), function(v)
+                return Novel {
+                    title = v:select("h3"):text(),
+                    imageURL = v:select("img"):attr("src"),
+                    link = shrinkURL(v:select("div.luf  a.series"):attr("href"))
+                }
+            end)
+        end)},
+    parseNovel = function(novelURL, loadChapters)
+        local document = GETDocument(expandURL(novelURL)):selectFirst("article")
+        local novelInfo = NovelInfo()
+        novelInfo:setTitle(document:select("h1"):text())
+        novelInfo:setImageURL(document:select("div.bigcover img"):attr("src"))
+        novelInfo:setDescription(table.concat(map(document:select("div.entry-content"), function(v)
+            return v:text()
+        end), "\n"))
+
+        local sta = document:selectFirst("div.info-content span:nth-child(1)"):text()
+        local t = sta:gsub("الحالة: ", "")
+        novelInfo:setStatus(NovelStatus(t == "Completed" and 1 or t == "Hiatus" and 2 or t == "Ongoing" and 0 or 3))
+
+        novelInfo:setAuthors(map(document:select("div.info-content span:nth-child(3) a"), function(v)
+            return v:text()
+        end))
+
+        novelInfo:setGenres(map(document:select("div.genxed a"), function(v)
+            return v:text()
+        end))
+
+        if loadChapters then
+            local listOfChapters = document:select("div.bixbox.bxcl.epcheck  div  ul  a")
+            local count = listOfChapters:size()
+            local chapterList = AsList(map(listOfChapters, function(v)
+                local c = NovelChapter()
+                c:setLink(shrinkURL(v:attr("href")))
+                c:setTitle(v:select("div.epl-title"):text())
+                c:setOrder(count)
+                count = count - 1
+                return c
+            end))
+            Reverse(chapterList)
+            novelInfo:setChapters(chapterList)
+        end
+        return novelInfo
+
+    end,
+    getPassage = function(chapterURL)
+        local d = GETDocument(expandURL(chapterURL))
+        return table.concat(map(d:select("article p"), function(v)
+            return v:text()
+        end), "\n")
+    end,
+    search = function(data)
+        local d = GETDocument(baseURL .. "/page/" .. data[PAGE] .. "/?s=" .. data[QUERY])
+        return map(d:select("div.listupd > article"), function(v)
+            return Novel {
+                title = v:selectFirst(" span.ntitle"):text(),
+                imageURL = v:selectFirst("img"):attr("src"),
+                link = shrinkURL(v:selectFirst(" a"):attr("href"))
+            }
+        end)
+    end,
+
+    shrinkURL = shrinkURL,
+    expandURL = expandURL
+
+}
