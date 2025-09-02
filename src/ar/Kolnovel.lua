@@ -373,13 +373,13 @@ return {
             end
 
             -- Reverse chapters to match the expected order
-            if #chapters > 0 then
-                local reversedChapters = {}
-                for i = #chapters, 1, -1 do
-                    table.insert(reversedChapters, chapters[i])
-                end
-                novelInfo:setChapters(AsList(reversedChapters))
-            end
+            -- if #chapters > 0 then
+            --     local reversedChapters = {}
+            --     for i = #chapters, 1, -1 do
+            --         table.insert(reversedChapters, chapters[i])
+            --     end
+            --     novelInfo:setChapters(AsList(reversedChapters))
+            -- end
         end
 
         return novelInfo
