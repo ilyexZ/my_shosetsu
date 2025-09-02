@@ -1,5 +1,4 @@
--- {"id":19691969,"ver":"3.0.0","libVer":"1.0.0","author":"ilyexZ"}
-
+-- {"id":19691969,"ver":"3.1.1","libVer":"1.0.0","author":"ilyexZ"}
 
 local baseURL = "https://kolnovel.site"
 
@@ -11,10 +10,10 @@ local function expandURL(url)
     return baseURL .. url
 end
 
--- Helper function to extract chapter numbers from text
+-- Helper function to extract chapter numbers from text (more flexible)
 local function extractChapterNumber(text)
     if not text then return nil end
-    local number = text:match("(%d+)$")
+    local number = text:match("(%d+)")
     return number and tonumber(number) or nil
 end
 
@@ -130,6 +129,21 @@ local function selectAllFromSelectors(document, selectors)
     return allElements
 end
 
+-- Remove site watermark text, robustly and safely
+local function sanitizeContent(s)
+    if not s then return "" end
+    -- 1) remove asterisks the site injects between letters/words
+    s = s:gsub("%*", "")
+    -- 2) remove the known Arabic line + kolnovel bits (allow flexible spaces)
+    --    e.g. "إقرأ رواياتنا فقط على موقع ملوك الروايات kolnovel kolnovel . com"
+    s = s:gsub("إقرأ%s*رواياتنا%s*فقط%s*على%s*مو?قع%s*ملوك%s*الروايات.-[Kk][Oo][Ll][Nn]?[Oo]?[Vv][Ee][Ll].-[Cc][Oo][Mm]", "")
+    -- 3) also strip any stray "kolnovel" tokens
+    s = s:gsub("[Kk][Oo][Ll][Nn]?[Oo]?[Vv][Ee][Ll]%.?%s*[Cc]?[Oo]?[Mm]?", "")
+    -- trim leftovers
+    s = s:gsub("%s+\n", "\n"):gsub("\n%s+", "\n"):gsub("^%s+", ""):gsub("%s+$", "")
+    return s
+end
+
 return {
     id = 19691969,
     name = "Kolnovel - ملوك الروايات",
@@ -226,14 +240,28 @@ return {
         end
         novelInfo:setTitle(titleText ~= "" and titleText or "Unknown Title")
         
-        -- Cover image extraction
-        local imgSelectors = {".ts-post-image", "div.bigcover img", "img[data-src]", ".novel-cover img", ".book-cover img"}
+        -- Cover image extraction (improved + absolute URL)
+        local imgSelectors = {
+            ".ts-post-image img",
+            ".ts-post-image",
+            "div.bigcover img",
+            "img[data-src]",
+            ".novel-cover img",
+            ".book-cover img",
+            "img[src]"
+        }
         for _, selector in ipairs(imgSelectors) do
             local imgElement = document:selectFirst(selector)
             if imgElement then
-                local imageURL = extractAttr(imgElement, "data-src") or 
-                               extractAttr(imgElement, "src")
+                local imageURL = extractAttr(imgElement, "data-src") or extractAttr(imgElement, "src")
                 if imageURL then
+                    if not imageURL:match("^https?://") then
+                        if imageURL:sub(1,1) == "/" then
+                            imageURL = baseURL .. imageURL
+                        else
+                            imageURL = baseURL .. "/" .. imageURL
+                        end
+                    end
                     novelInfo:setImageURL(imageURL)
                     break
                 end
@@ -396,18 +424,19 @@ return {
                     for j = 1, paragraphs:size() do
                         local pText = extractText(paragraphs:get(j-1))
                         if pText ~= "" then
-                            table.insert(content, pText)
+                            table.insert(content, sanitizeContent(pText))
                         end
                     end
                     if #content > 0 then
-                        return table.concat(content, "\n")
+                        return '<div dir="rtl" style="text-align:right">' .. table.concat(content, "<br>") .. "</div>"
                     end
                 end
                 
                 -- Fallback to all text content
                 local allText = extractText(contentElement)
                 if allText ~= "" then
-                    return allText
+                    allText = sanitizeContent(allText)
+                    return '<div dir="rtl" style="text-align:right">' .. allText .. "</div>"
                 end
             end
         end
@@ -419,11 +448,11 @@ return {
             for i = 1, articleParagraphs:size() do
                 local pText = extractText(articleParagraphs:get(i-1))
                 if pText ~= "" then
-                    table.insert(content, pText)
+                    table.insert(content, sanitizeContent(pText))
                 end
             end
             if #content > 0 then
-                return table.concat(content, "\n")
+                return '<div dir="rtl" style="text-align:right">' .. table.concat(content, "<br>") .. "</div>"
             end
         end
         
@@ -450,204 +479,6 @@ return {
             return nil
         end)
     end,
-
-    shrinkURL = shrinkURL,
-    expandURL = expandURL
-}-- {"id":19691969,"ver":"3.1.0","libVer":"1.0.0","author":"ilyexZ"}
-
-local baseURL = "https://kolnovel.site"
-
-local function shrinkURL(url)
-    return url:gsub(baseURL, "")
-end
-
-local function expandURL(url)
-    return baseURL .. url
-end
-
--- Improved: extract chapter number from anywhere in the string
-local function extractChapterNumber(text)
-    if not text then return nil end
-    local number = text:match("(%d+)")
-    return number and tonumber(number) or nil
-end
-
--- Clean chapter title (unchanged)
-local function cleanChapterTitle(chapterText, novelTitle)
-    if not chapterText or not novelTitle then return chapterText or "" end
-    local escapedTitle = novelTitle:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
-    local cleaned = chapterText:match("^" .. escapedTitle .. "%s*(.+)$")
-    return cleaned and cleaned:gsub("^%s+", ""):gsub("%s+$", "") or chapterText
-end
-
--- Helper: strip known unwanted watermark text
-local function removeUnwantedText(content)
-    if not content then return "" end
-    local unwanted = "إقرأ رواياتنا.-مو.قع م.لوك الرو.ايات ko.lno.vel ko.lno.vel. com"
-    -- loose matching (dots stand for optional chars/spaces)
-    content = content:gsub("إقرأ رواياتنا%*? فقط%*? على%*? مو%*?قع م%*?لوك الرو%*?ايات ko%*?lno%*?vel ko%*?lno%*?vel%. com", "")
-    content = content:gsub(unwanted, "")
-    return content
-end
-
--- ... keep rest of helpers unchanged ...
-
-return {
-    id = 19691969,
-    name = "Kolnovel - ملوك الروايات",
-    baseURL = baseURL,
-    imageURL = "https://github.com/shosetsuorg/extensions/raw/dev/icons/Kolnovel.png",
-    hasSearch = true,
-
-    -- Listings unchanged ...
-
-    parseNovel = function(novelURL, loadChapters)
-        local document = safeGETDocument(expandURL(novelURL))
-        if not document then return nil end
-
-        local novelInfo = NovelInfo()
-
-        -- Title extraction unchanged ...
-
-        -- Improved cover image extraction
-        local imgSelectors = {
-            ".ts-post-image img",
-            "div.bigcover img",
-            "img[data-src]",
-            "img[src]",
-            ".novel-cover img",
-            ".book-cover img"
-        }
-        for _, selector in ipairs(imgSelectors) do
-            local imgElement = document:selectFirst(selector)
-            if imgElement then
-                local imageURL = extractAttr(imgElement, "data-src") or extractAttr(imgElement, "src")
-                if imageURL then
-                    if not imageURL:match("^http") then
-                        imageURL = expandURL(imageURL)
-                    end
-                    novelInfo:setImageURL(imageURL)
-                    break
-                end
-            end
-        end
-
-        -- Description, status, authors, genres unchanged ...
-
-        if loadChapters then
-            local chapterSelectors = {
-                ".eplister ul li",
-                ".bixbox .epcheck ul li", 
-                "div.epcontent ul li",
-                ".chapter-list li",
-                ".chapters li",
-                "ul.chapter-list li"
-            }
-
-            local chapters = {}
-            local novelTitle = novelInfo:getTitle()
-
-            for _, selector in ipairs(chapterSelectors) do
-                local chapterElements = document:select(selector)
-                if chapterElements:size() > 0 then
-                    for i = 1, chapterElements:size() do
-                        local chapterItem = chapterElements:get(i-1)
-                        local chapterLink = chapterItem:selectFirst("a")
-
-                        if chapterLink then
-                            local href = extractAttr(chapterLink, "href")
-                            if href then
-                                local chapter = NovelChapter()
-                                chapter:setLink(shrinkURL(href))
-
-                                local titleElement = chapterItem:selectFirst(".epl-title") or
-                                                    chapterItem:selectFirst(".chapter-title") or
-                                                    chapterItem:selectFirst(".chapternum") or
-                                                    chapterLink
-
-                                local chapterTitle = extractText(titleElement)
-                                local chapterNumber = extractChapterNumber(chapterTitle)
-                                chapterTitle = cleanChapterTitle(chapterTitle, novelTitle)
-
-                                if isChapterLocked(chapterTitle) and not chapterTitle:find("🔒") then
-                                    chapterTitle = "🔒 " .. chapterTitle
-                                end
-
-                                chapter:setTitle(chapterTitle)
-                                chapter:setOrder(chapterNumber or (i)) -- order safer now
-                                table.insert(chapters, chapter)
-                            end
-                        end
-                    end
-                    break
-                end
-            end
-
-            -- Reverse chapters here
-            if #chapters > 0 then
-                local reversedChapters = {}
-                for i = #chapters, 1, -1 do
-                    table.insert(reversedChapters, chapters[i])
-                end
-                novelInfo:setChapters(AsList(reversedChapters))
-            end
-        end
-
-        return novelInfo
-    end,
-
-    getPassage = function(chapterURL)
-        local document = safeGETDocument(expandURL(chapterURL))
-        if not document then return "Error loading chapter content." end
-
-        local contentSelectors = {
-            "div.epcontent", 
-            "article div.entry-content", 
-            "div.chapter-content",
-            ".content",
-            ".chapter-text",
-            ".text-content"
-        }
-
-        for _, selector in ipairs(contentSelectors) do
-            local contentElement = document:selectFirst(selector)
-            if contentElement then
-                local unwantedSelectors = {".code-block", ".ads", "script", "style", ".advertisement", ".ad"}
-                for _, unwantedSelector in ipairs(unwantedSelectors) do
-                    local unwantedElements = contentElement:select(unwantedSelector)
-                    for j = 1, unwantedElements:size() do
-                        unwantedElements:get(j-1):remove()
-                    end
-                end
-
-                local paragraphs = contentElement:select("p")
-                local content = {}
-                if paragraphs:size() > 0 then
-                    for j = 1, paragraphs:size() do
-                        local pText = extractText(paragraphs:get(j-1))
-                        if pText ~= "" then
-                            pText = removeUnwantedText(pText)
-                            table.insert(content, pText)
-                        end
-                    end
-                else
-                    local allText = extractText(contentElement)
-                    if allText ~= "" then
-                        table.insert(content, removeUnwantedText(allText))
-                    end
-                end
-
-                if #content > 0 then
-                    -- Wrap with RTL direction
-                    return "<div dir='rtl' style='text-align:right'>" .. table.concat(content, "<br>") .. "</div>"
-                end
-            end
-        end
-
-        return "Unable to extract chapter content."
-    end,
-
-    -- search unchanged ...
 
     shrinkURL = shrinkURL,
     expandURL = expandURL
