@@ -324,6 +324,8 @@ return {
             novelInfo:setGenres(genres)
         end
 
+        -- ... (keep the code the same until the chapters section in parseNovel function)
+
         if loadChapters then
             -- Multiple approaches to find chapters
             local chapterSelectors = {".eplister ul li", ".bixbox .epcheck ul li", "div.epcontent ul li",
@@ -372,15 +374,11 @@ return {
                 end
             end
 
-            -- Reverse chapters to match the expected order
-            -- if #chapters > 0 then
-            --     local reversedChapters = {}
-            --     for i = #chapters, 1, -1 do
-            --         table.insert(reversedChapters, chapters[i])
-            --     end
-            --     novelInfo:setChapters(AsList(reversedChapters))
-            -- end
+            -- REMOVED the chapter reversing code - chapters will now stay in original order
+            novelInfo:setChapters(AsList(chapters))
         end
+
+-- ... (keep the rest of the code the same)
 
         return novelInfo
     end,
