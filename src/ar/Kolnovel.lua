@@ -14,7 +14,7 @@ local function extractChapterNumber(text)
     if not text then
         return nil
     end
-    local number = text:match("(%d+)")
+    local number = text:match("(%d+)$") -- Match numbers at the end of string
     return number and tonumber(number) or nil
 end
 
@@ -196,6 +196,13 @@ return {
                             local imageURL = nil
                             if imgElement then
                                 imageURL = extractAttr(imgElement, "data-src") or extractAttr(imgElement, "src")
+                                if imageURL and not imageURL:match("^https?://") then
+                                    if imageURL:sub(1, 1) == "/" then
+                                        imageURL = baseURL .. imageURL
+                                    else
+                                        imageURL = baseURL .. "/" .. imageURL
+                                    end
+                                end
                             end
 
                             table.insert(novels, Novel {
@@ -224,10 +231,21 @@ return {
             local imgElement = v:selectFirst("img")
 
             if linkElement and titleElement then
+                local imageURL = nil
+                if imgElement then
+                    imageURL = extractAttr(imgElement, "data-src") or extractAttr(imgElement, "src")
+                    if imageURL and not imageURL:match("^https?://") then
+                        if imageURL:sub(1, 1) == "/" then
+                            imageURL = baseURL .. imageURL
+                        else
+                            imageURL = baseURL .. "/" .. imageURL
+                        end
+                    end
+                end
+                
                 return Novel {
                     title = extractText(titleElement),
-                    imageURL = imgElement and (extractAttr(imgElement, "data-src") or extractAttr(imgElement, "src")) or
-                        nil,
+                    imageURL = imageURL,
                     link = shrinkURL(extractAttr(linkElement, "href"))
                 }
             end
@@ -324,8 +342,6 @@ return {
             novelInfo:setGenres(genres)
         end
 
-        -- ... (keep the code the same until the chapters section in parseNovel function)
-
         if loadChapters then
             -- Multiple approaches to find chapters
             local chapterSelectors = {".eplister ul li", ".bixbox .epcheck ul li", "div.epcontent ul li",
@@ -374,11 +390,15 @@ return {
                 end
             end
 
-            -- REMOVED the chapter reversing code - chapters will now stay in original order
-            novelInfo:setChapters(AsList(chapters))
+            -- Reverse chapters to match the JavaScript behavior
+            if #chapters > 0 then
+                local reversedChapters = {}
+                for i = #chapters, 1, -1 do
+                    table.insert(reversedChapters, chapters[i])
+                end
+                novelInfo:setChapters(AsList(reversedChapters))
+            end
         end
-
--- ... (keep the rest of the code the same)
 
         return novelInfo
     end,
@@ -447,10 +467,21 @@ return {
             local imgElement = v:selectFirst("img")
 
             if linkElement and titleElement then
+                local imageURL = nil
+                if imgElement then
+                    imageURL = extractAttr(imgElement, "data-src") or extractAttr(imgElement, "src")
+                    if imageURL and not imageURL:match("^https?://") then
+                        if imageURL:sub(1, 1) == "/" then
+                            imageURL = baseURL .. imageURL
+                        else
+                            imageURL = baseURL .. "/" .. imageURL
+                        end
+                    end
+                end
+                
                 return Novel {
                     title = extractText(titleElement),
-                    imageURL = imgElement and (extractAttr(imgElement, "data-src") or extractAttr(imgElement, "src")) or
-                        nil,
+                    imageURL = imageURL,
                     link = shrinkURL(extractAttr(linkElement, "href"))
                 }
             end
