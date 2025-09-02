@@ -411,20 +411,24 @@ return {
                     for j = 1, paragraphs:size() do
                         local pText = extractText(paragraphs:get(j - 1))
                         if pText ~= "" then
+                            -- Apply sanitization to remove watermark
+                            pText = sanitizeContent(pText)
                             table.insert(content, pText)
                         end
                     end
                 else
                     local allText = extractText(contentElement)
                     if allText ~= "" then
+                        -- Apply sanitization to remove watermark
+                        allText = sanitizeContent(allText)
                         table.insert(content, allText)
                     end
                 end
 
                 if #content > 0 then
                     local passage = table.concat(content, "\n\n")
-                    -- Force RTL using Unicode control characters
-                    return "\u{202B}" .. passage .. "\u{202C}"
+                    -- Remove the u{202B} character and use HTML for RTL formatting
+                    return "<div style='text-align: right; direction: rtl;'>" .. passage .. "</div>"
                 end
             end
         end
